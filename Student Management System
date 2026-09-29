@@ -1,0 +1,231 @@
+#include <iostream>
+#include <fstream>
+#include <vector>
+#include <string>
+#include <iomanip>
+
+using namespace std;
+
+// Structure to store student details
+struct Student {
+    int rollNumber;
+    string name;
+    int age;
+    string course;
+};
+
+// Function prototypes
+void addStudent();
+void displayStudents();
+void updateStudent();
+void deleteStudent();
+void saveToFile(const vector<Student>& students);
+vector<Student> readFromFile();
+
+const string FILE_NAME = "students.txt";
+
+int main() {
+    int choice;
+    do {
+        cout << "\n========================================\n";
+        cout << "      STUDENT MANAGEMENT SYSTEM         \n";
+        cout << "========================================\n";
+        cout << "1. Add Student Record\n";
+        cout << "2. Display All Student Records\n";
+        cout << "3. Update Student Record\n";
+        cout << "4. Delete Student Record\n";
+        cout << "5. Exit\n";
+        cout << "----------------------------------------\n";
+        cout << "Enter your choice (1-5): ";
+        cin >> choice;
+
+        switch (choice) {
+            case 1:
+                addStudent();
+                break;
+            case 2:
+                displayStudents();
+                break;
+            case 3:
+                updateStudent();
+                break;
+            case 4:
+                deleteStudent();
+                break;
+            case 5:
+                cout << "\nExiting the program. Goodbye!\n";
+                break;
+            default:
+                cout << "\nInvalid choice! Please try again.\n";
+        }
+    } while (choice != 5);
+
+    return 0;
+}
+
+// Function to read all records from the text file into a vector
+vector<Student> readFromFile() {
+    vector<Student> students;
+    ifstream inFile(FILE_NAME);
+    if (!inFile) {
+        return students; // Return empty vector if file doesn't exist yet
+    }
+
+    Student s;
+    while (inFile >> s.rollNumber) {
+        inFile.ignore(); // Clear newline
+        getline(inFile, s.name);
+        inFile >> s.age;
+        inFile.ignore();
+        getline(inFile, s.course);
+        students.push_back(s);
+    }
+
+    inFile.close();
+    return students;
+}
+
+// Function to write all records from the vector back to the file
+void saveToFile(const vector<Student>& students) {
+    ofstream outFile(FILE_NAME, ios::trunc);
+    if (!outFile) {
+        cout << "Error opening file for writing!\n";
+        return;
+    }
+
+    for (const auto& s : students) {
+        outFile << s.rollNumber << "\n"
+                << s.name << "\n"
+                << s.age << "\n"
+                << s.course << "\n";
+    }
+
+    outFile.close();
+}
+
+// Function to add a new student record
+void addStudent() {
+    vector<Student> students = readFromFile();
+    Student s;
+
+    cout << "\n--- Add New Student ---\n";
+    cout << "Enter Roll Number: ";
+    cin >> s.rollNumber;
+
+    // Check for duplicate roll number
+    for (const auto& student : students) {
+        if (student.rollNumber == s.rollNumber) {
+            cout << "Error: Record with Roll Number " << s.rollNumber << " already exists!\n";
+            return;
+        }
+    }
+
+    cin.ignore(); // Clear input buffer
+    cout << "Enter Full Name: ";
+    getline(cin, s.name);
+    cout << "Enter Age: ";
+    cin >> s.age;
+    cin.ignore();
+    cout << "Enter Course: ";
+    getline(cin, s.course);
+
+    students.push_back(s);
+    saveToFile(students);
+
+    cout << "\nStudent record added successfully!\n";
+}
+
+// Function to display all student records
+void displayStudents() {
+    vector<Student> students = readFromFile();
+
+    if (students.empty()) {
+        cout << "\nNo records found!\n";
+        return;
+    }
+
+    cout << "\n---------------------------------------------------------------\n";
+    cout << left << setw(12) << "Roll No" 
+         << setw(25) << "Name" 
+         << setw(8)  << "Age" 
+         << setw(20) << "Course" << "\n";
+    cout << "---------------------------------------------------------------\n";
+
+    for (const auto& s : students) {
+        cout << left << setw(12) << s.rollNumber 
+             << setw(25) << s.name 
+             << setw(8)  << s.age 
+             << setw(20) << s.course << "\n";
+    }
+    cout << "---------------------------------------------------------------\n";
+}
+
+// Function to update an existing student record
+void updateStudent() {
+    vector<Student> students = readFromFile();
+
+    if (students.empty()) {
+        cout << "\nNo records available to update!\n";
+        return;
+    }
+
+    int rollNum;
+    cout << "\nEnter Roll Number to update: ";
+    cin >> rollNum;
+
+    bool found = false;
+    for (auto& s : students) {
+        if (s.rollNumber == rollNum) {
+            found = true;
+            cout << "\nRecord found! Enter new details:\n";
+            
+            cin.ignore(); // Clear buffer
+            cout << "Enter New Full Name: ";
+            getline(cin, s.name);
+            cout << "Enter New Age: ";
+            cin >> s.age;
+            cin.ignore();
+            cout << "Enter New Course: ";
+            getline(cin, s.course);
+
+            break;
+        }
+    }
+
+    if (found) {
+        saveToFile(students);
+        cout << "\nStudent record updated successfully!\n";
+    } else {
+        cout << "\nStudent record with Roll Number " << rollNum << " not found!\n";
+    }
+}
+
+// Function to delete a student record
+void deleteStudent() {
+    vector<Student> students = readFromFile();
+
+    if (students.empty()) {
+        cout << "\nNo records available to delete!\n";
+        return;
+    }
+
+    int rollNum;
+    cout << "\nEnter Roll Number to delete: ";
+    cin >> rollNum;
+
+    bool found = false;
+    for (auto it = students.begin(); it != students.end(); ++it) {
+        if (it->rollNumber == rollNum) {
+            students.erase(it);
+            found = true;
+            break;
+        }
+    }
+
+    if (found) {
+        saveToFile(students);
+        cout << "\nStudent record deleted successfully!\n";
+    } else {
+        cout << "\nStudent record with Roll Number " << rollNum << " not found!\n";
+    }
+}
